@@ -101,7 +101,7 @@ static ErlDrvEntry uart_drv_entry;
 static ErlDrvSSizeT ctl_reply(int rep, char* buf, ErlDrvSizeT len,
 			      char** rbuf, ErlDrvSizeT rsize)
 {
-    char* ptr;
+    char* ptr = NULL;
 
     if ((len+1) > rsize) {
 	ErlDrvBinary* bin = driver_alloc_binary(len+1);
@@ -293,17 +293,29 @@ static void uart_drv_stop(ErlDrvData d)
 
 static char* format_command(int cmd)
 {
-    switch(cmd) {
-    case UART_CMD_OPEN:      return "open";
-    case UART_CMD_HANGUP:    return "hangup";
-    case UART_CMD_CLOSE:     return "close";
-    case UART_CMD_FLOW:      return "flow";
-    case UART_CMD_FLUSH:     return "flush";
-    case UART_CMD_BREAK:     return "break";
-    case UART_CMD_SETOPTS:   return "setopts";
-    case UART_CMD_GETOPTS:   return "getopts";
-    case UART_CMD_SENDCHAR:  return "sendchar";
-    case UART_CMD_SEND:      return "send";
+   char* Retcommand[]{
+   "open",
+   "hangup"
+   "close"
+   "flow"
+   "flush"
+   "break"
+   "setopts"
+   "getopts"
+   "sendchar"
+   "send"
+   };
+	switch(cmd) {
+    case UART_CMD_OPEN:      return *(Retcommand);
+    case UART_CMD_HANGUP:    return *(Retcommand+1);
+    case UART_CMD_CLOSE:     return *(Retcommand+2);
+    case UART_CMD_FLOW:      return *(Retcommand+3);
+    case UART_CMD_FLUSH:     return *(Retcommand+4);
+    case UART_CMD_BREAK:     return *(Retcommand+5);
+    case UART_CMD_SETOPTS:   return *(Retcommand+6);
+    case UART_CMD_GETOPTS:   return *(Retcommand+7);
+    case UART_CMD_SENDCHAR:  return *(Retcommand+8);
+    case UART_CMD_SEND:      return *(Retcommand+9);
     case UART_CMD_GET_MODEM: return "get_modem";
     case UART_CMD_SET_MODEM: return "set_modem";
     case UART_CMD_CLR_MODEM: return "clr_modem";
