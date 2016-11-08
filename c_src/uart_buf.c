@@ -124,14 +124,15 @@ int uart_buf_packet(uart_buf_t* bf, unsigned int htype, unsigned psize,
     case UART_PB_RAW: {
 	unsigned m;
         if (n == 0) 
-	    goto more;
+	    //goto more;
 	hlen = 0;
 	m = (htype & UART_PB_FIXED_MASK) >> 16;
 	if ((plen = m) == 0) {
             DEBUGF(" => nothing remain packet=%d", n);
             return n;
         }
-	goto remain;
+	//goto remain;
+     break;
     }
 
     case UART_PB_N: {
@@ -168,7 +169,8 @@ int uart_buf_packet(uart_buf_t* bf, unsigned int htype, unsigned psize,
 	    }
 	}
 	plen = (unsigned) pl;
-	goto remain;
+	//goto remain;
+	     break;
     }
 
     case UART_PB_LINE_LF: {
@@ -179,7 +181,7 @@ int uart_buf_packet(uart_buf_t* bf, unsigned int htype, unsigned psize,
                 DEBUGF(" => line buffer full (no NL)=%d", n);
                 return trunc_len;
             }
-            goto more;
+            //goto more;
         }
         else {
             int len = (ptr2 - ptr) + 1; /* including newline */
@@ -190,6 +192,7 @@ int uart_buf_packet(uart_buf_t* bf, unsigned int htype, unsigned psize,
             DEBUGF(" => nothing remain packet=%d", len);
             return len;
         }
+	     break;
     }
     case UART_PB_GSM_0710: {
 	// check for either BASIC or ADVANCED mode
@@ -207,7 +210,8 @@ int uart_buf_packet(uart_buf_t* bf, unsigned int htype, unsigned psize,
 	    }
 	    return n;
 	}
-	goto more;
+	//goto more;
+	     break;
     }
 
     case UART_PB_ADVANCED_0710: {
@@ -238,7 +242,8 @@ int uart_buf_packet(uart_buf_t* bf, unsigned int htype, unsigned psize,
 		return n;
 	    }
 	}
-	goto more;
+	//goto more;
+	     break;
     }
 
     case UART_PB_BASIC_0710: {
@@ -254,14 +259,14 @@ int uart_buf_packet(uart_buf_t* bf, unsigned int htype, unsigned psize,
 		    hlen = 6;          // rest of the bytes
 		    if (n >= plen+hlen)
 			return (plen+hlen);
-		    goto more;
+		    //goto more;
 		}
 		else {
 		    plen = (ptr[4]<<7)+(ptr[3]>>1);  // length of Data
 		    hlen = 6;          // rest of the bytes
 		    if (n >= plen+hlen)
 			return (plen+hlen);
-		    goto more;
+		    //goto more;
 		}
 	    }
 	    else {
@@ -275,7 +280,8 @@ int uart_buf_packet(uart_buf_t* bf, unsigned int htype, unsigned psize,
 		return n;  // deliver all bytes
 	    }
 	}
-	goto more;
+	//goto more;
+	     break;
     }
     default:
         DEBUGF(" => case error");
@@ -294,8 +300,6 @@ remain:
 	}
 	return tlen;
     }		
-
-
 }
 
 /*
