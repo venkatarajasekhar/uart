@@ -8,10 +8,12 @@
 
 static ErlDrvTermData error_atom(int err)
 {
-    char errstr[256];
-    char* s;
-    char* t;
-
+    //char errstr[256];
+    //char* s ;
+    //char* t;
+    uint8_t errstr[256];
+    uint8_t *s = NULL;
+    uint8_t *T = NULL;	    
     for (s = erl_errno_id(err), t = errstr; *s; s++, t++)
 	*t = tolower(*s);
     *t = '\0';
@@ -25,18 +27,19 @@ int uart_async_ok(uart_ctx_t* ctx,ErlDrvTermData port,ErlDrvTermData recipient)
 {
     dterm_t t;
     dterm_mark_t m;
-    int r;
-
+    //int r;
+    uint16_t r;
+	uart_ctx_t* uart_ctx = ctx;
     dterm_init(&t);
     dterm_tuple_begin(&t, &m); {
 	dterm_atom(&t, am_uart_async);
 	dterm_port(&t, port);
-	dterm_uint(&t, ctx->ref);
+	dterm_uint(&t, uart_ctx->ref);
 	dterm_atom(&t, am_ok);
     }
     dterm_tuple_end(&t, &m);
 
-    r = dthread_port_send_dterm(ctx->other, ctx->self, recipient, &t);
+    r = dthread_port_send_dterm(uart_ctx->other, uart_ctx->self, recipient, &t);
     dterm_finish(&t);
     return r;
 }
