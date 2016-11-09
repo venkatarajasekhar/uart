@@ -5,7 +5,8 @@
 
 void uart_buf_init(uart_buf_t* bf)
 {
-    memset(bf, 0, sizeof(uart_buf_t));
+        uart_buf_t* uart_buf = bf;
+	memset(uart_buf, 0, sizeof(uart_buf_t));
 }
 
 void uart_buf_finish(uart_buf_t* bf)
@@ -17,20 +18,24 @@ void uart_buf_finish(uart_buf_t* bf)
 
 void uart_buf_reset(uart_buf_t* bf)
 {
-    bf->ptr_start = bf->base;
-    bf->ptr       = bf->base;
+    uart_buf_t* uart_buf = bf;
+	if(uart_buf != NULL){
+    uart_buf_t->ptr_start = uart_buf_t->base;
+    uart_buf_t->ptr       = uart_buf_t->base;
+	}
+	
 }
 
 int uart_buf_alloc(uart_buf_t* bf, size_t sz)
 {
-    uint8_t* base;
-
+    uint8_t* base = NULL;
+    uart_buf_t* uart_buf = bf;
     if ((base = DALLOC(sz)) == NULL)
 	return -1;
-    bf->sz        = sz;
-    bf->base      = base;
-    bf->ptr_start = base;
-    bf->ptr       = base;
+    uart_buf->sz        = sz;
+    uart_buf->base      = base;
+    uart_buf->ptr_start = base;
+    uart_buf->ptr       = base;
     return (int) sz;
 }
 
@@ -41,25 +46,26 @@ int uart_buf_alloc(uart_buf_t* bf, size_t sz)
 //
 int uart_buf_expand(uart_buf_t* bf, size_t len)
 {
-    uint8_t* base;
+    uint8_t* base = NULL;
+    uart_buf_t* uart_buf = bf;
     intptr_t offs1;
     intptr_t offs2;
-    size_t used = bf->ptr_start - bf->base;
+    size_t used = uart_buf->ptr_start - bf->base;
     size_t ulen = used + len;
 
-    if (bf->sz >= ulen) /* packet will fit */
+    if (uart_buf->sz >= ulen) /* packet will fit */
 	return 0;
 
-    offs1 = bf->ptr_start - bf->base;
-    offs2 = bf->ptr - bf->ptr_start;
+    offs1 = uart_buf->ptr_start - bf->base;
+    offs2 = uart_buf->ptr - bf->ptr_start;
 
     if ((base = DREALLOC(bf->base, ulen)) == NULL)
 	return -1;
 
-    bf->base      = base;
-    bf->ptr_start = bf->base + offs1;
-    bf->ptr       = bf->ptr_start + offs2;
-    bf->sz        = ulen;
+    uart_buf->base      = base;
+    uart_buf->ptr_start = uart_buf->base + offs1;
+    uart_buf->ptr       = uart_buf->ptr_start + offs2;
+    uart_buf->sz        = ulen;
     return 0;
 }
 
@@ -108,6 +114,16 @@ int uart_buf_push(uart_buf_t* bf, char* buf, size_t len)
     return 0;
 }
 
+int uart_buf_size()
+{
+        int tlen = hlen + plen;
+	if (((psize != 0) && (plen > psize))|| tlen < (int)hlen) {
+	    // wrap-around protection 
+	   return -1;
+	}
+	return tlen;
+}		
+
 // Return > 0 Total packet length.in bytes
 //        = 0 Length unknown, need more data.
 //        < 0 Error, invalid format.
@@ -122,22 +138,27 @@ int uart_buf_packet(uart_buf_t* bf, unsigned int htype, unsigned psize,
 
     switch (htype & UART_PB_TYPE_MASK) {
     case UART_PB_RAW: {
-	unsigned m;
-        if (n == 0) 
-	    goto more;
+	uint16_t m,Buffsize;
+	    if (n == 0) 
+	    //goto more;
+		    return 0;
 	hlen = 0;
 	m = (htype & UART_PB_FIXED_MASK) >> 16;
 	if ((plen = m) == 0) {
             DEBUGF(" => nothing remain packet=%d", n);
             return n;
         }
-	goto remain;
+	//goto remain;
+	  Buffsize = uart_buf_size();
+	    //Need to Impelement the Logic
+	    break;
     }
 
     case UART_PB_N: {
 	uint64_t pl = 0;
 	hlen = (htype & UART_PB_BYTES_MASK) >> 8;
-	if (n < hlen) goto more;
+	if (n < hlen) //goto more;
+		return 0;
 	if (htype & UART_PB_LITTLE_ENDIAN) {
 	    ptr += hlen;
 	    switch(hlen) {
@@ -152,6 +173,7 @@ int uart_buf_packet(uart_buf_t* bf, unsigned int htype, unsigned psize,
 		break;
 	    default: return -1;		
 	    }
+		break;
 	}
 	else {
 	    switch(hlen) {
@@ -166,9 +188,13 @@ int uart_buf_packet(uart_buf_t* bf, unsigned int htype, unsigned psize,
 		break;
 	    default: return -1;
 	    }
+		break;
 	}
 	plen = (unsigned) pl;
-	goto remain;
+	  
+	//goto remain;
+	    Buffsize = uart_buf_size();
+	    //Need to Impelement the Logic  
     }
 
     case UART_PB_LINE_LF: {
@@ -179,7 +205,8 @@ int uart_buf_packet(uart_buf_t* bf, unsigned int htype, unsigned psize,
                 DEBUGF(" => line buffer full (no NL)=%d", n);
                 return trunc_len;
             }
-            goto more;
+            //goto more;
+		return 0;
         }
         else {
             int len = (ptr2 - ptr) + 1; /* including newline */
@@ -190,6 +217,7 @@ int uart_buf_packet(uart_buf_t* bf, unsigned int htype, unsigned psize,
             DEBUGF(" => nothing remain packet=%d", len);
             return len;
         }
+	    break;
     }
     case UART_PB_GSM_0710: {
 	// check for either BASIC or ADVANCED mode
@@ -207,7 +235,8 @@ int uart_buf_packet(uart_buf_t* bf, unsigned int htype, unsigned psize,
 	    }
 	    return n;
 	}
-	goto more;
+	//goto more;
+	    return 0;
     }
 
     case UART_PB_ADVANCED_0710: {
@@ -220,7 +249,8 @@ int uart_buf_packet(uart_buf_t* bf, unsigned int htype, unsigned psize,
 		    if (ptr[plen] == 0x7D) {  // escape
 			plen++;
 			if (plen == n)
-			    goto more;
+			   // goto more;
+				return 0;
 		    }
 		    plen++;
 		}
@@ -238,7 +268,8 @@ int uart_buf_packet(uart_buf_t* bf, unsigned int htype, unsigned psize,
 		return n;
 	    }
 	}
-	goto more;
+	//goto more;
+	    return 0;
     }
 
     case UART_PB_BASIC_0710: {
@@ -254,14 +285,16 @@ int uart_buf_packet(uart_buf_t* bf, unsigned int htype, unsigned psize,
 		    hlen = 6;          // rest of the bytes
 		    if (n >= plen+hlen)
 			return (plen+hlen);
-		    goto more;
+		    //goto more;
+			return 0;
 		}
 		else {
 		    plen = (ptr[4]<<7)+(ptr[3]>>1);  // length of Data
 		    hlen = 6;          // rest of the bytes
 		    if (n >= plen+hlen)
 			return (plen+hlen);
-		    goto more;
+		    //goto more;
+			return 0;
 		}
 	    }
 	    else {
@@ -275,26 +308,28 @@ int uart_buf_packet(uart_buf_t* bf, unsigned int htype, unsigned psize,
 		return n;  // deliver all bytes
 	    }
 	}
-	goto more;
+	//goto more;
+	    return 0;
     }
     default:
         DEBUGF(" => case error");
         return -1;
     }
-
+/*
 more:
     return 0;
-
+*/
+	/*
 remain:
     {
         int tlen = hlen + plen;
 	if (((psize != 0) && (plen > psize))
-	    || tlen < (int)hlen) { /* wrap-around protection */
+	    || tlen < (int)hlen) { // wrap-around protection 
 	    return -1;
 	}
 	return tlen;
     }		
-
+*/
 
 }
 
@@ -346,7 +381,9 @@ int uart_buf_remain(uart_buf_t* bf, int* len,
                     return psize;
                 }
                 else
-                    goto error;
+                   // goto error;
+			 DEBUGF(" => packet error");
+                         return -1;
             }
             DEBUGF(" => restart more=%d", nfill - n);
             return nfill - n;
@@ -356,8 +393,9 @@ int uart_buf_remain(uart_buf_t* bf, int* len,
             return nsz;
         }	    
     }
-
+/*
 error:
     DEBUGF(" => packet error");
     return -1;
+    */.
 }
